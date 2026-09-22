@@ -40,8 +40,8 @@ def _is_verified_usdc(r: Any) -> bool:
     known_usdc = _KNOWN_USDC_ADDRESSES.get(r.network)
     if known_usdc is None or r.asset.lower() != known_usdc:
         return False
-    // A negative amount is malformed. uint256 encoding would reject it
-    // downstream anyway, but a spend policy should never call it payable.
+    # A negative amount is malformed. uint256 encoding would reject it
+    # downstream anyway, but a spend policy should never call it payable.
     return int(r.get_amount()) >= 0
 
 
@@ -63,9 +63,9 @@ def _payment_policy(max_amount_usd: float | None, max_total_usd: float | None):
     total_cap_atomic = (
         round(max_total_usd * 10**_USDC_DECIMALS) if max_total_usd is not None else None
     )
-    // Cumulative authorization ledger for this session. Counted at approval
-    // time (see x402_session's max_total_usd docs for why), so it only ever
-    // over-counts — never under.
+    # Cumulative authorization ledger for this session. Counted at approval
+    # time (see x402_session's max_total_usd docs for why), so it only ever
+    # over-counts — never under.
     authorized_atomic = 0
 
     def policy(_version: int, requirements: list[Any]) -> list[Any]:
@@ -113,9 +113,9 @@ def _payment_policy(max_amount_usd: float | None, max_total_usd: float | None):
                 f"(already authorized ${authorized_usd}) — refusing to pay. Build a new "
                 "x402_session to start a fresh budget if this spending is intended."
             )
-        // The client settles ONE of the requirements this policy returns. To
-        // keep the ledger honest, return exactly one — the cheapest — and
-        // count it as authorized now.
+        # The client settles ONE of the requirements this policy returns. To
+        # keep the ledger honest, return exactly one — the cheapest — and
+        # count it as authorized now.
         cheapest = min(within_budget, key=lambda r: int(r.get_amount()))
         authorized_atomic += int(cheapest.get_amount())
         return [cheapest]
@@ -177,8 +177,8 @@ def x402_session(
             "exact"-scheme payments are supported by this library today
             regardless of the value passed here.
     """
-    // Imported lazily so importing this package doesn't require x402's EVM
-    // extras unless a session is actually built.
+    # Imported lazily so importing this package doesn't require x402's EVM
+    # extras unless a session is actually built.
     from x402 import x402ClientSync
     from x402.http.clients import wrapRequestsWithPayment
     from x402.mechanisms.evm.exact import ExactEvmScheme
@@ -194,11 +194,13 @@ def x402_session(
 
     session = requests.Session()
     x402_client = x402ClientSync()
+    if hasattr(x402_client, "set_spend_controls"):
+        x402_client.set_spend_controls(False)
     x402_client.register(network, ExactEvmScheme(account))
-    // The asset-verification policy is ALWAYS on unless the caller both
-    // sets no cap and explicitly opts into unknown assets. With a cap set,
-    // allow_unknown_assets is deliberately ignored: an asset with
-    // unverified decimals cannot be measured against a USD cap.
+    # The asset-verification policy is ALWAYS on unless the caller both
+    # sets no cap and explicitly opts into unknown assets. With a cap set,
+    # allow_unknown_assets is deliberately ignored: an asset with
+    # unverified decimals cannot be measured against a USD cap.
     has_cap = max_amount_usd is not None or max_total_usd is not None
     if has_cap or not allow_unknown_assets:
         x402_client.register_policy(_payment_policy(max_amount_usd, max_total_usd))

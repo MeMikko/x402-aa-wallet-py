@@ -22,7 +22,7 @@ Non-custodial, by construction: this module never transmits, logs, or
 persists a private key anywhere. Key generation happens entirely inside
 your own process via eth_account; the private key is returned to YOU and
 exists only in your process's memory unless you choose to store it. This
-package (and HoodGrow, who sponsors it) have no visibility into it, ever.
+package has no visibility into it, ever.
 """
 
 from __future__ import annotations
